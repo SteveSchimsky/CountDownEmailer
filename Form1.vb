@@ -59,7 +59,7 @@ Public Class Form1
 
             rn = r.Next(1, 10)
 
-            If rn = 5 Then
+            If rn = 5 Or rn = 6 Or rn = 7 Then
                 rn = r.Next(1, 10)
                 If rn <= 5 Then
                     '10% of the time 'juj it up'
