@@ -1,17 +1,21 @@
 ﻿Imports System.IO
 Imports System.ComponentModel
 Imports System.Net.Mail
+Imports System.Drawing
+
 Public Class Form1
 
     Dim Seconds As Integer = 0
-    Dim DailyPath As String = "D:\Data\www\VacationCountDownEmailer\Data\Daily.htm"
-    Dim TheAppDataPath As String = "D:\Data\www\VacationCountDownEmailer\Data\"
+    Dim DailyPath As String = Application.StartupPath & "\Data\Daily.htm"
+    Dim TheAppDataPath As String = Application.StartupPath & "\Data\"
+    Dim ImagePath As String = Application.StartupPath & "\Data\Images\"
 
 
     Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
 
         Me.Show()
         Application.DoEvents()
+        'MsgBox("debug")
         System.Threading.Thread.Sleep(30000) 'give the system time to wake up if this is being started by a service...
 
         Dim strLastModified = System.IO.File.GetLastWriteTime(DailyPath).ToShortDateString()
@@ -31,8 +35,13 @@ Public Class Form1
 
     Sub ProcessIt()
 
+
+        Dim myAltView As AlternateView
+
+
         Dim r As New Random
         Dim rn As Integer
+
 
         Dim sr As New StreamReader(TheAppDataPath & "Template.htm")
         Dim s As String = sr.ReadToEnd
@@ -46,6 +55,7 @@ Public Class Form1
 
         'get the following dates...
         Dim FollowingDates As String = GetFollowingDates(nv, tmp)
+        s = Replace(s, "FollowingDates", FollowingDates)
 
         Dim fType As String = ""
 
@@ -81,7 +91,7 @@ Public Class Form1
 
 
         Dim n As Integer = DateDiff(DateInterval.Day, Now, nv)
-
+        'n = 999
 
         'debug... n = 9
 
@@ -129,61 +139,110 @@ SkipOut: '12.27.2022
                 fType3 = ".jpg"
             End If
 
-
         End If
         '*****************************************************************************************************************
-
-
-
 
 
         '****************************************************************
         '***  hide leading zero ***
         '****************************************************************
+
+        Dim DoFirst As Boolean = True
+        Dim DoSecond As Boolean = True
+
         If Mid(sDays, 1, 1) = "0" Then
-            s = Replace(s, "<img src='http://www.schimsky.com/vacationcountdownemailer/NUM1' height='500' id='img1'>", "")
-            's = Replace(s, "id='img1'", "id='img1' style='display:none'")
+            'Hide it...
+            s = Replace(s, "<img src='cid:111' height='500' id='img1'>", "")
+            DoFirst = False
         End If
 
         If Mid(sDays, 2, 1) = "0" And Mid(sDays, 1, 1) = "0" Then
-            s = Replace(s, "<img src='http://www.schimsky.com/vacationcountdownemailer/NUM2' height='500' id='img2'>", "")
-            's = Replace(s, "id='img2'", "id='img2' style='display:none'")
+            'Hide it...
+            s = Replace(s, "<img src='cid:222' height='500' id='img2'>", "")
+            DoSecond = False
         End If
         '****************************************************************
         '****************************************************************
 
-        s = Replace(s, "NUM1", Mid(sDays, 1, 1) & Suffix1 & fType1)
-        s = Replace(s, "NUM2", Mid(sDays, 2, 1) & Suffix2 & fType2)
-        s = Replace(s, "NUM3", Mid(sDays, 3, 1) & Suffix3 & fType3)
+
 
         Dim iExtra As Integer = 0
         If sDays = "000" Then
-            s = Replace(s, "yipee", "<img src='http://www.schimsky.com/vacationcountdownemailer/cc.gif' height='300'>")
+            'create an image tag that will be referenced by the embedded image
+            s = Replace(s, "yipee", "<img src='cid:Yipee' height='500' id='img2'>")
             iExtra = 1
         End If
 
         If sDays = "007" Then
-            s = Replace(s, "yipee", "<img src='http://www.schimsky.com/vacationcountdownemailer/oneweek.jpg' height='300'>")
+            'create an image tag that will be referenced by the embedded image
+            s = Replace(s, "yipee", "<img src='cid:OneWeek' height='300' id='img2'>")
         End If
 
+
         If iExtra = 0 Then
+            'Hide the 'yipee'
             s = Replace(s, "yipee", "")
         End If
 
 
-        s = Replace(s, "FollowingDates", FollowingDates)
+
+
+        '*********************************************************************************************************
+        'Only need this once...
+        myAltView = AlternateView.CreateAlternateViewFromString(s, New System.Net.Mime.ContentType("text/html"))
+        '*********************************************************************************************************
+
+
+        Dim LR As LinkedResource = CreateLinkedResource("HEADER111", ImagePath & "HEADER.JPG", System.Net.Mime.MediaTypeNames.Image.Jpeg)
+        myAltView.LinkedResources.Add(LR)
+
+
+        If sDays = "000" Then
+            'Add the Yipee We're there! image....
+            LR = CreateLinkedResource("Yipee", ImagePath & "cc.gif", System.Net.Mime.MediaTypeNames.Image.Gif)
+            myAltView.LinkedResources.Add(LR)
+        End If
+
+
+        If sDays = "007" Then
+            'Add the 1 Week to Go! image...
+            LR = CreateLinkedResource("OneWeek", ImagePath & "oneweek.jpg", System.Net.Mime.MediaTypeNames.Image.Jpeg)
+            myAltView.LinkedResources.Add(LR)
+        End If
+
+
+        If DoFirst = True Then
+            Dim Name1 As String = Mid(sDays, 1, 1) & Suffix1 & fType1
+            LR = CreateLinkedResource("111", ImagePath & Name1, System.Net.Mime.MediaTypeNames.Image.Jpeg)
+            myAltView.LinkedResources.Add(LR)
+        End If
+
+
+        If DoSecond = True Then
+            Dim Name2 As String = Mid(sDays, 2, 1) & Suffix2 & fType2
+            LR = CreateLinkedResource("222", ImagePath & Name2, System.Net.Mime.MediaTypeNames.Image.Jpeg)
+            myAltView.LinkedResources.Add(LR)
+        End If
+
+
+        Dim Name3 As String = Mid(sDays, 3, 1) & Suffix3 & fType3
+        LR = CreateLinkedResource("333", ImagePath & Name3, System.Net.Mime.MediaTypeNames.Image.Jpeg)
+        myAltView.LinkedResources.Add(LR)
+
 
 
         'Print out to file, just for debugging....
         Dim sw As New StreamWriter(DailyPath, False)
-            sw.Write(s)
-            sw.Flush()
-            sw.Close()
+        sw.Write(s)
+        sw.Flush()
+        sw.Close()
 
-            'MessageBox.Show("debug..")
-            Dim Smtp_Server As New SmtpClient
-            Dim e_mail As New MailMessage()
-            Smtp_Server.UseDefaultCredentials = False
+
+
+        'MessageBox.Show("debug..")
+        Dim Smtp_Server As New SmtpClient
+        Dim e_mail As New MailMessage()
+        Smtp_Server.UseDefaultCredentials = False
         'Smtp_Server.Credentials = New Net.NetworkCredential("sschimsky@tampabay.rr.com", "local") 'used with roadrunner cable
         'Smtp_Server.Credentials = New Net.NetworkCredential("steve@schimsky.com", "evabean2014")
         'Smtp_Server.Credentials = New Net.NetworkCredential("schimsky@outlook.com", "L0cal$0nly") 'used with outlook.com
@@ -198,6 +257,8 @@ SkipOut: '12.27.2022
         Smtp_Server.EnableSsl = True 'used with outlook.com and roadrunner cable
 
         e_mail = New MailMessage()
+        e_mail.AlternateViews.Add(myAltView)
+
         'e_mail.From = New MailAddress("sschimsky@tampabay.rr.com")
         'e_mail.From = New MailAddress("schimsky@outlook.com")
         e_mail.From = New MailAddress("schimsky@gmail.com")
@@ -206,8 +267,9 @@ SkipOut: '12.27.2022
         e_mail.IsBodyHtml = True
         e_mail.Body = s
 
-        Smtp_Server.Send(e_mail)
 
+        Smtp_Server.Send(e_mail)
+        'MsgBox("done")
 
     End Sub
 
@@ -269,6 +331,44 @@ SkipOut: '12.27.2022
         Return sReturn
 
     End Function
+
+
+
+    Function CreateLinkedResource(PicID As String, PathToPIC As String, MediaTypeImage As String) As LinkedResource
+
+
+
+        'GRAB IMAGE FROM FILE AND PUT IN MEMORY STREAM
+        Dim myImage As Image
+        myImage = Image.FromFile(PathToPIC) 'arraylist of my images
+
+        Dim IC As ImageConverter
+        Dim myImageData() As Byte
+
+        IC = New ImageConverter
+        myImageData = DirectCast(IC.ConvertTo(myImage, GetType(Byte())), Byte())
+        Dim myStream As New MemoryStream(myImageData)
+
+        'CREATE ALT VIEW
+        Dim myLinkedResource As LinkedResource
+        'CREATE LINKED RESOURCE FOR ALT VIEW
+        myLinkedResource = New LinkedResource(myStream, MediaTypeImage)
+        ''SET CONTENTID SO HTML CAN REFERENCE CORRECTLY
+        myLinkedResource.ContentId = PicID 'this must match in the HTML of the message body
+        '******************************************************************************
+        'added by steve on 9.7.2022 ..
+        myLinkedResource.ContentType.MediaType = MediaTypeImage 'System.Net.Mime.MediaTypeNames.Image.Jpeg
+        myLinkedResource.TransferEncoding = System.Net.Mime.TransferEncoding.Base64
+        myLinkedResource.ContentType.Name = PicID & "-Name"
+        '******************************************************************************
+        ''ADD LINKED RESOURCE TO ALT VIEW, AND ADD ALT VIEW TO MESSAGE
+
+        Return myLinkedResource
+
+
+    End Function
+
+
 
 
 End Class
