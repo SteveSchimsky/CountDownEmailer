@@ -257,6 +257,9 @@ SkipOut: '12.27.2022
         Smtp_Server.EnableSsl = True 'used with outlook.com and roadrunner cable
 
         e_mail = New MailMessage()
+        e_mail.BodyEncoding = System.Text.Encoding.UTF8
+        e_mail.SubjectEncoding = System.Text.Encoding.UTF8
+
         e_mail.AlternateViews.Add(myAltView)
 
         'e_mail.From = New MailAddress("sschimsky@tampabay.rr.com")
@@ -338,21 +341,21 @@ SkipOut: '12.27.2022
 
 
 
-        'GRAB IMAGE FROM FILE AND PUT IN MEMORY STREAM
-        Dim myImage As Image
-        myImage = Image.FromFile(PathToPIC) 'arraylist of my images
+        ''GRAB IMAGE FROM FILE AND PUT IN MEMORY STREAM
+        'Dim myImage As Image
+        'myImage = Image.FromFile(PathToPIC) 'arraylist of my images
 
-        Dim IC As ImageConverter
-        Dim myImageData() As Byte
+        'Dim IC As ImageConverter
+        'Dim myImageData() As Byte
 
-        IC = New ImageConverter
-        myImageData = DirectCast(IC.ConvertTo(myImage, GetType(Byte())), Byte())
-        Dim myStream As New MemoryStream(myImageData)
+        'IC = New ImageConverter
+        'myImageData = DirectCast(IC.ConvertTo(myImage, GetType(Byte())), Byte())
+        'Dim myStream As New MemoryStream(myImageData)
 
         'CREATE ALT VIEW
         Dim myLinkedResource As LinkedResource
         'CREATE LINKED RESOURCE FOR ALT VIEW
-        myLinkedResource = New LinkedResource(myStream, MediaTypeImage)
+        myLinkedResource = New LinkedResource(PathToPIC, MediaTypeImage)
         ''SET CONTENTID SO HTML CAN REFERENCE CORRECTLY
         myLinkedResource.ContentId = PicID 'this must match in the HTML of the message body
         '******************************************************************************
